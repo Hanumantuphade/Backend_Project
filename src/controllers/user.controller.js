@@ -1,9 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import {ApiResponse} from "../utils/ApiResponse.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js"; // Assuming you have a cloudinary utility for image uploads
-
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   //get user details from frontend
@@ -17,7 +16,7 @@ const registerUser = asyncHandler(async (req, res) => {
   //send response to frontend
 
   const { username, email, password, fullname } = req.body;
-  console.log("Registering user:", { username, email });
+  // console.log("Registering user:", { username, email });
 
   //validation
 
@@ -32,7 +31,7 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
   //check if user already exists
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
@@ -46,10 +45,10 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   //check for images
 
-  const avtarLocalPath = req.files?.avatar[0]?.path;
+  const avatarLocalPath = req.files?.avatar[0]?.path;
   const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-  if (!avtarLocalPath) {
+  if (!avatarLocalPath) {
     throw new ApiError(
       400,
       "Avatar is required",
@@ -59,8 +58,8 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // upload images to cloudinary
-  const avatar = await User.uploadOnCloudinary(avtarLocalPath);
-  const coverImage = await User.uploadOnCloudinary(coverImageLocalPath);
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
     throw new ApiError(
@@ -81,7 +80,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
   // remove password and refresh token from response
   const createdUser = User.findById(user._id).select("-password -refreshToken");
-// check for user creation
+  // check for user creation
   if (!createdUser) {
     throw new ApiError(
       500,
@@ -91,16 +90,9 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
   //send response to frontend
-return res.status(201).json(
-    new ApiResponse(
-      201,
-      "User registered successfully",
-      createdUser,
-      "User registration successful"
+  return res.status(201).json(
+        new ApiResponse(200, createdUser, "User registered Successfully")
     )
-  );
-
 });
-
 
 export { registerUser };
