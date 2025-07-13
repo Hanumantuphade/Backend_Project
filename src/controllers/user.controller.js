@@ -46,7 +46,14 @@ const registerUser = asyncHandler(async (req, res) => {
   //check for images
 
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(
@@ -79,7 +86,9 @@ const registerUser = asyncHandler(async (req, res) => {
     coverImage: coverImage?.secure_url || "",
   });
   // remove password and refresh token from response
-  const createdUser = User.findById(user._id).select("-password -refreshToken");
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
   // check for user creation
   if (!createdUser) {
     throw new ApiError(
@@ -90,9 +99,9 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
   //send response to frontend
-  return res.status(201).json(
-        new ApiResponse(200, createdUser, "User registered Successfully")
-    )
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
 
 export { registerUser };
