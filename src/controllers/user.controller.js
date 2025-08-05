@@ -4,6 +4,8 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -205,8 +207,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined, // clear the refresh token
+      $unset: {
+        refreshToken: 1, // clear the refresh token
       },
     },
     {
@@ -441,11 +443,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            if: {
-              if: { $in: [req.user?._id, "$subscribedTo.subcriber"] },
-              then: true,
-              else: false,
-            },
+            if: { $in: [req.user?._id, "$subscribedTo.subcriber"] },
+            then: true,
+            else: false,
           },
         },
       },
